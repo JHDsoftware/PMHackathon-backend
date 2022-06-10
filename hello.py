@@ -1,36 +1,30 @@
-from flask import Flask
-from flask import request
+import json
+
 import pandas as pd
 import pm4py
-from pm4py.objects.log.util import dataframe_utils
-from pm4py.objects.conversion.log import converter as log_converter
-from pm4py.algo.discovery.dfg import algorithm as dfg_discovery
-from pm4py.objects.log.importer.xes import importer as xes_importer
-from pm4py.visualization.dfg import visualizer as dfg_visualization
+from flask import Flask
+from flask import request
 from flask import send_file
-import json
-
-from pycelonis import get_celonis
-from pycelonis.celonis_api.pql.pql import PQL, PQLFilter, PQLColumn
-
-from pycelonis import get_celonis
-from pycelonis.celonis_api.pql.pql import PQL, PQLFilter, PQLColumn
 from flask_cors import CORS, cross_origin
-import json
-import pandas as pd
+from pm4py.algo.discovery.dfg import algorithm as dfg_discovery
+from pm4py.objects.conversion.log import converter as log_converter
+from pm4py.visualization.dfg import visualizer as dfg_visualization
+from pycelonis import get_celonis
+from pycelonis.celonis_api.pql.pql import PQL, PQLFilter, PQLColumn
 
 
 def strfdelta(tdelta):
-    fmt="{days} days {hours}:{minutes}:{seconds}"
+    fmt = "{days} days {hours}:{minutes}:{seconds}"
     d = {"days": tdelta.days}
     d["hours"], rem = divmod(tdelta.seconds, 3600)
     d["minutes"], d["seconds"] = divmod(rem, 60)
     return fmt.format(**d)
 
 
-def timeDiffer(pd1,pd2):
-    diff= pd.to_datetime(pd1)-pd.to_datetime(pd2)
+def timeDiffer(pd1, pd2):
+    diff = pd.to_datetime(pd1) - pd.to_datetime(pd2)
     return diff.mean().total_seconds(), diff.std().total_seconds()
+
 
 celonis = get_celonis(
     url="academic-ang-li3-rwth-aachen-de.eu-2.celonis.cloud",
@@ -94,7 +88,7 @@ def query():
 @cross_origin()
 def drawplot():
     selectedColumn = request.args.get('selectedColumn')
-    epsilon= request.args.get('epsilon')
+    epsilon = request.args.get('epsilon')
     minPTS = request.args.get('minPTS')
     numberList = request.args.get('numberList')
     customName = request.args.get("customName")
@@ -109,7 +103,7 @@ def drawplot():
 
     query += PQLFilter(
         "FILTER CLUSTER_VARIANTS ( VARIANT ( " + table_name + '.{} ),{}, {} )  IN ({})'.format(selectedColumn, minPTS,
-                                                                                             epsilon, numberList))
+                                                                                               epsilon, numberList))
     activity_column = datamodel._get_data_frame(query)
     df = activity_column[["caseId", "{}".format(customName), "start"]]
     df = pm4py.format_dataframe(df, case_id='caseId', activity_key='{}'.format(customName), timestamp_key='start')
@@ -118,6 +112,7 @@ def drawplot():
     gviz = dfg_visualization.apply(dfg)
 
     return send_file(dfg_visualization.view(gviz), mimetype='image/png')
+
 
 @app.route("/compute/", methods=['GET'])
 @cross_origin()
@@ -138,7 +133,6 @@ def comput():
     numberList = request.args.get('numberList')
     customName = "clusterID"
     query = PQL()
-
 
     query += PQLColumn(f"CLUSTER_VARIANTS ( VARIANT ({table_name}.{selectedColumn} ),{minPTS}, {epsilon} )",
                        name=f"{customName}")
