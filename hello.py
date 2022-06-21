@@ -21,16 +21,17 @@ import pandas as pd
 
 
 def strfdelta(tdelta):
-    fmt="{days} days {hours}:{minutes}:{seconds}"
+    fmt = "{days} days {hours}:{minutes}:{seconds}"
     d = {"days": tdelta.days}
     d["hours"], rem = divmod(tdelta.seconds, 3600)
     d["minutes"], d["seconds"] = divmod(rem, 60)
     return fmt.format(**d)
 
 
-def timeDiffer(pd1,pd2):
-    diff= pd.to_datetime(pd1)-pd.to_datetime(pd2)
+def timeDiffer(pd1, pd2):
+    diff = pd.to_datetime(pd1) - pd.to_datetime(pd2)
     return diff.mean().total_seconds(), diff.std().total_seconds()
+
 
 celonis = get_celonis(
     url="academic-ang-li3-rwth-aachen-de.eu-2.celonis.cloud",
@@ -63,9 +64,7 @@ def estimate():
     recursion_depth = request.args.get('recursion_depth')
     other_query = PQL()
     other_query += PQLColumn(
-        "ESTIMATE_CLUSTER_PARAMS( VARIANT (" + table_name + '."{}" ), {}, {}, {} )'.format(selectedColumn, epsilon,
-                                                                                           number_of_values,
-                                                                                           recursion_depth),
+        f"ESTIMATE_CLUSTER_PARAMS( VARIANT ({table_name} .{selectedColumn}), {epsilon}, {number_of_values}, {recursion_depth} )",
         name="MIN_PTS")
     other = datamodel.get_data_frame(other_query)
     minPTSList = other['MIN_PTS'].tolist()
@@ -81,9 +80,9 @@ def query():
     customName = request.args.get('customName')
     query = PQL()
     query += PQLColumn(
-        "CLUSTER_VARIANTS ( VARIANT ( " + table_name + '.{} ),{}, {} )'.format(selectedColumn, minPTS, epsilon),
-        name="{}".format(customName))
-    query += PQLColumn("VARIANT ( " + table_name + '.{} )'.format(selectedColumn), name="variant")
+        f"CLUSTER_VARIANTS ( VARIANT ( {table_name} .{selectedColumn} ),{minPTS}, {epsilon} )",
+        name=f"{customName}")
+    query += PQLColumn(f"VARIANT ( {table_name} .{selectedColumn} )", name="variant")
     query += PQLColumn(table_name + '."CASE"', name="caseId3")
     activity_column = datamodel._get_data_frame(query)
     result = activity_column.to_json(orient="records")
@@ -94,30 +93,30 @@ def query():
 @cross_origin()
 def drawplot():
     selectedColumn = request.args.get('selectedColumn')
-    epsilon= request.args.get('epsilon')
+    epsilon = request.args.get('epsilon')
     minPTS = request.args.get('minPTS')
     numberList = request.args.get('numberList')
     customName = request.args.get("customName")
     query = PQL()
     query += PQLColumn(
-        "CLUSTER_VARIANTS ( VARIANT ( " + table_name + '.{} ),{}, {} )'.format(selectedColumn, minPTS, epsilon),
-        name="{}".format(customName))
-    query += PQLColumn("VARIANT ( " + table_name + '.{} )'.format(selectedColumn), name="variant")
+        f"CLUSTER_VARIANTS ( VARIANT ( {table_name} .{selectedColumn} ),{minPTS}, {epsilon} )",
+        name=f"{customName}")
+    query += PQLColumn(f"VARIANT ( {table_name} .{selectedColumn} )", name="variant")
     query += PQLColumn(table_name + '."CASE"', name="caseId")
-    query += PQLColumn(table_name + '."{}"'.format(selectedColumn), name="{}".format(customName))
+    query += PQLColumn(table_name + f'.{selectedColumn}', name=f"{customName}")
     query += PQLColumn(table_name + '."START"', name="start")
 
     query += PQLFilter(
-        "FILTER CLUSTER_VARIANTS ( VARIANT ( " + table_name + '.{} ),{}, {} )  IN ({})'.format(selectedColumn, minPTS,
-                                                                                             epsilon, numberList))
+        f"FILTER CLUSTER_VARIANTS ( VARIANT (  {table_name}  .{selectedColumn} ),{minPTS}, {epsilon} )  IN ({numberList})")
     activity_column = datamodel._get_data_frame(query)
-    df = activity_column[["caseId", "{}".format(customName), "start"]]
-    df = pm4py.format_dataframe(df, case_id='caseId', activity_key='{}'.format(customName), timestamp_key='start')
+    df = activity_column[["caseId", f"{customName}", "start"]]
+    df = pm4py.format_dataframe(df, case_id='caseId', activity_key=f'{customName}', timestamp_key='start')
     log = log_converter.apply(df)
     dfg = dfg_discovery.apply(log)
     gviz = dfg_visualization.apply(dfg)
 
     return send_file(dfg_visualization.view(gviz), mimetype='image/png')
+
 
 @app.route("/compute/", methods=['GET'])
 @cross_origin()
@@ -139,7 +138,6 @@ def comput():
     customName = "clusterID"
     query = PQL()
 
-
     query += PQLColumn(f"CLUSTER_VARIANTS ( VARIANT ({table_name}.{selectedColumn} ),{minPTS}, {epsilon} )",
                        name=f"{customName}")
     query += PQLColumn(f"VARIANT ( {table_name}.{selectedColumn})", name="variant")
@@ -154,8 +152,7 @@ def comput():
     query += PQLColumn(activity_table_cost, name="cost")
 
     query += PQLFilter(
-        "FILTER CLUSTER_VARIANTS ( VARIANT ( " + table_name + '.{} ),{}, {} )  IN ({})'.format(selectedColumn, minPTS,
-                                                                                               epsilon, numberList))
+        f"FILTER CLUSTER_VARIANTS ( VARIANT (  {table_name}  .{selectedColumn} ),{minPTS}, {epsilon} )  IN ({numberList})")
 
     activity_column = datamodel._get_data_frame(query)
 
