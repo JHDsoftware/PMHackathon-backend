@@ -1,23 +1,16 @@
-from flask import Flask
-from flask import request
+import json
+
 import pandas as pd
 import pm4py
-from pm4py.objects.log.util import dataframe_utils
-from pm4py.objects.conversion.log import converter as log_converter
-from pm4py.algo.discovery.dfg import algorithm as dfg_discovery
-from pm4py.objects.log.importer.xes import importer as xes_importer
-from pm4py.visualization.dfg import visualizer as dfg_visualization
+from flask import Flask
+from flask import request
 from flask import send_file
-import json
-
-from pycelonis import get_celonis
-from pycelonis.celonis_api.pql.pql import PQL, PQLFilter, PQLColumn
-
-from pycelonis import get_celonis
-from pycelonis.celonis_api.pql.pql import PQL, PQLFilter, PQLColumn
 from flask_cors import CORS, cross_origin
-import json
-import pandas as pd
+from pm4py.algo.discovery.dfg import algorithm as dfg_discovery
+from pm4py.objects.conversion.log import converter as log_converter
+from pm4py.visualization.dfg import visualizer as dfg_visualization
+from pycelonis import get_celonis
+from pycelonis.celonis_api.pql.pql import PQL, PQLFilter, PQLColumn
 
 
 def strfdelta(tdelta):
